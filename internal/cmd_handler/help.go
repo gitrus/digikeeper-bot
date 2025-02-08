@@ -16,6 +16,9 @@ func HandleHelpFabric(cmdDescriptions map[string]string) th.Handler {
 		helpMessageBuilder := strings.Builder{}
 		helpMessageBuilder.WriteString("/help    Show this help message\n")
 		for command, description := range cmdDescriptions {
+			if command == "help" {
+				continue
+			}
 			helpMessageBuilder.WriteString("/" + command)
 			helpMessageBuilder.WriteString("   " + description)
 			helpMessageBuilder.WriteString("\n")

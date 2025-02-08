@@ -3,19 +3,29 @@ package cmdhandler
 import (
 	"log/slog"
 
-	ic "github.com/WAY29/icecream-go/icecream"
 	"github.com/mymmrac/telego"
+	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+
+	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 )
 
-func HandleCancel(bot *telego.Bot, update telego.Update) {
-	ic.Ic("Command /cancel received")
+type UserStateManager interface {
+	DropActiveState(userID int64)
+	Set(userID int64, state string) (string, error)
+}
 
-	slog.InfoContext(update.Context(), "Received update", slog.Any("message", update.Message))
+func HandleCancel(usm UserStateManager) th.Handler {
+	return func(bot *telego.Bot, update telego.Update) {
+		slog.InfoContext(update.Context(), "Receive /cancel", loggingctx.GetLogAttrs(update.Context())...)
 
-	chatId := tu.ID(update.Message.Chat.ID)
-	_, _ = bot.SendMessage(tu.Message(
-		chatId,
-		"I just interrupted the current operation/s. What can I do for you now?",
-	))
+		userID := update.Message.From.ID
+		usm.DropActiveState(userID)
+
+		chatId := tu.ID(update.Message.Chat.ID)
+		_, _ = bot.SendMessage(tu.Message(
+			chatId,
+			"I just interrupted the current operation/s. What can I do for you now?",
+		))
+	}
 }

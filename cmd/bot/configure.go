@@ -3,44 +3,41 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
-	"github.com/joho/godotenv"
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	BotKey        string
-	CommonTimeout time.Duration
+	Env           string        `env:"ENVIRONMENT_NAME" env-default:"dev"`
+	BotKey        string        `env:"TELEGRAM_BOT_TOKEN" env-default:""`
+	CommonTimeout time.Duration `env:"COMMON_TIMEOUT" env-default:"5s"`
 }
 
 func Configure() Config {
-	environ := "dev"
-	err := configureLogger(environ)
+	var cfg Config
+	err := cleanenv.ReadEnv(&cfg)
+	if err != nil {
+		log.Fatalf("Failed to fetch env vars: %v", err)
+	}
+
+	err = configureLogger(cfg.Env)
 	if err != nil {
 		log.Fatalf("Failed to configure logger: %v", err)
 	}
 
-	if environ == "dev" {
+	if strings.HasPrefix(strings.ToLower(cfg.Env), "dev") {
 		absPath, err := filepath.Abs("../../.env")
-		err = godotenv.Load(absPath)
+		err = cleanenv.ReadConfig(absPath, &cfg)
 		if err != nil {
 			log.Fatalf("Failed to get .env: %v", err)
 		}
 	}
 
-	tgToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	if tgToken == "" {
-		log.Fatalf("TELEGRAM_BOT_TOKEN is not set")
-	}
-	commonTimeout := 5 * time.Second
-
-	return Config{
-		BotKey:        tgToken,
-		CommonTimeout: commonTimeout,
-	}
+	return cfg
 }
 
 func configureLogger(environ string) error {

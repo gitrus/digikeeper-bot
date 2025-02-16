@@ -4,11 +4,11 @@ WORKDIR /usr/app
 
 COPY go.mod go.sum ./
 
-RUN go mod download
+RUN go mod download && mkdir -p /usr/app/bin
 
 COPY . .
 
-RUN go build -o /usr/app/bin/digikeeper-bot
+RUN go build -o /usr/app/bin/digikeeper-bot ./cmd/bot
 
 # main
 FROM debian:bookworm-slim AS main

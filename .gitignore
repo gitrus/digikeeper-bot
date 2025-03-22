@@ -28,6 +28,8 @@ go.work.sum
 # IDE
 .idea/
 .vscode/
+.zed/
 
 # COMMON
 tmp/
+./bot

@@ -3,7 +3,6 @@ module github.com/gitrus/digikeeper-bot
 go 1.24.0
 
 require (
-	github.com/WAY29/icecream-go v0.0.0-20240322061317-a6fef5a698b9
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/mymmrac/telego v1.0.2
 	github.com/valyala/fasthttp v1.59.0
@@ -212,3 +211,5 @@ require (
 )
 
 tool github.com/golangci/golangci-lint/cmd/golangci-lint
+
+tool github.com/WAY29/icecream-go

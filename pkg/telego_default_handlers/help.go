@@ -1,17 +1,19 @@
 package cmdhandler
 
 import (
+	"log/slog"
 	"strings"
 
-	ic "github.com/WAY29/icecream-go/icecream"
+	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
 func HandleHelpFabric(cmdDescriptions map[string]string) th.Handler {
-	return func(bot *telego.Bot, update telego.Update) {
-		ic.Ic("Command /help received")
+	return func(ctx *th.Context, update telego.Update) error {
+		logAttrs := loggingctx.GetLogAttrs(update.Context())
+		slog.InfoContext(update.Context(), "Receive /help", logAttrs...)
 
 		helpMessageBuilder := strings.Builder{}
 		helpMessageBuilder.WriteString("/help    Show this help message\n")
@@ -25,6 +27,8 @@ func HandleHelpFabric(cmdDescriptions map[string]string) th.Handler {
 		}
 
 		chatId := tu.ID(update.Message.Chat.ID)
-		_, _ = bot.SendMessage(tu.Message(chatId, helpMessageBuilder.String()))
+		_, err := ctx.Bot().SendMessage(ctx, tu.Message(chatId, helpMessageBuilder.String()))
+
+		return err
 	}
 }

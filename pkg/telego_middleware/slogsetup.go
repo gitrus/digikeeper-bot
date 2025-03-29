@@ -14,15 +14,25 @@ func firstNRunes(s string, n int) string {
 	return string(runes[:n])
 }
 
-func SlogAddAttrs() th.Middleware {
-	return func(bot *telego.Bot, update telego.Update, next th.Handler) {
-		ctx := update.Context()
-		ctx = loggingctx.AddLogAttr(ctx, "update_id", update.UpdateID)
-		ctx = loggingctx.AddLogAttr(ctx, "user_id", update.Message.From.ID)
-		ctx = loggingctx.AddLogAttr(ctx, "chat_id", update.Message.Chat.ID)
-		ctx = loggingctx.AddLogAttr(ctx, "message_id", update.Message.MessageID)
-		ctx = loggingctx.AddLogAttr(ctx, "text_first10", firstNRunes(update.Message.Text, 10))
+func AddSlogAttrs() th.Handler {
+	return func(ctx *th.Context, update telego.Update) error {
 
-		next(bot, update.WithContext(ctx))
+		innerCtx := ctx.Context()
+		innerCtx = loggingctx.AddLogAttr(ctx, "update_id", update.UpdateID)
+		if update.Message != nil {
+			innerCtx = loggingctx.AddLogAttr(ctx, "message_id", update.Message.MessageID)
+			innerCtx = loggingctx.AddLogAttr(ctx, "text_first10", firstNRunes(update.Message.Text, 10))
+
+			if update.Message.From != nil {
+				innerCtx = loggingctx.AddLogAttr(ctx, "user_id", update.Message.From.ID)
+			}
+			if update.Message.Chat.ID != 0 {
+				innerCtx = loggingctx.AddLogAttr(ctx, "chat_id", update.Message.Chat.ID)
+			}
+		}
+
+		ctx.WithContext(innerCtx)
+
+		return ctx.Next(update)
 	}
 }

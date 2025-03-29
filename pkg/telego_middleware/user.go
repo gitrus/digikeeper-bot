@@ -29,24 +29,25 @@ func (um *UserStateMiddleware[S]) WithUserState(ctx context.Context, state S) co
 	return context.WithValue(ctx, userStateContextKey{}, state)
 }
 
-func (um *UserStateMiddleware[S]) Middleware() th.Middleware {
-	return func(bot *telego.Bot, update telego.Update, next th.Handler) {
+func (um *UserStateMiddleware[S]) Middleware() th.Handler {
+	return func(ctx *th.Context, update telego.Update) error {
 		userId := update.Message.From.ID
 		state, err := um.repo.Fetch(userId)
 		if err != nil {
 			state, err = um.repo.InitState(userId)
 			if err != nil {
 				slog.ErrorContext(
-					update.Context(),
+					ctx,
 					"FetchState is missed, InitState failed",
 					"error", err,
 				)
-				return
+				return err
 			}
 		}
 
-		ctx := um.WithUserState(update.Context(), state)
+		innerCtx := um.WithUserState(ctx.Context(), state)
+		ctx.WithContext(innerCtx)
 
-		next(bot, update.WithContext(ctx))
+		return ctx.Next(update)
 	}
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func HandleAdd(usm UserStateManager) th.Handler {
-	return func(bot *telego.Bot, update telego.Update) {
+	return func(ctx *th.Context, update telego.Update) error {
 		slog.InfoContext(update.Context(), "Receive /add", loggingctx.GetLogAttrs(update.Context())...)
 
 		userID := update.Message.From.ID
@@ -20,14 +20,15 @@ func HandleAdd(usm UserStateManager) th.Handler {
 			slog.ErrorContext(update.Context(), "Failed to set state", loggingctx.GetLogAttrs(update.Context())...)
 
 			chatId := tu.ID(update.Message.Chat.ID)
-			_, _ = bot.SendMessage(tu.Message(
+			_, err = ctx.Bot().SendMessage(ctx, tu.Message(
 				chatId,
 				"Another action is in progress. Please finish it first.",
 			))
-			return
+			return err
 		}
 
 		logAttrs := append(loggingctx.GetLogAttrs(update.Context()), slog.String("state", state))
 		slog.InfoContext(update.Context(), "Set state", logAttrs...)
+		return nil
 	}
 }

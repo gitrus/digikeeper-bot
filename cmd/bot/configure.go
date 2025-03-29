@@ -12,12 +12,20 @@ import (
 )
 
 type Config struct {
-	Env           string        `env:"ENVIRONMENT_NAME" env-default:"dev"`
-	BotKey        string        `env:"TELEGRAM_BOT_TOKEN" env-default:""`
-	CommonTimeout time.Duration `env:"COMMON_TIMEOUT" env-default:"5s"`
+	Env            string        `env:"ENVIRONMENT_NAME" env-default:"dev"`
+	CommonTimeout  time.Duration `env:"COMMON_TIMEOUT" env-default:"5s"`
+	LocalPort      string        `env:"LOCAL_PORT" env-default:"9000"`
+	LocalHost      string        `env:"LOCAL_HOST" env-default:"localhost"`
+	BotKey         string        `env:"TELEGRAM_BOT_TOKEN" env-default:""`
+	BotPublicURL   string        `env:"TELEGRAM_BOT_PUBLIC_URL" env-default:"localhost"`
+	AllowedUpdates []string      `env:"TELEGRAM_ALLOWED_UPDATES" env-default:"message"`
 }
 
-func Configure() Config {
+func (c *Config) IsDevEnv() bool {
+	return strings.HasPrefix(strings.ToLower(c.Env), "dev")
+}
+
+func configure() Config {
 	var cfg Config
 	err := cleanenv.ReadEnv(&cfg)
 	if err != nil {
@@ -29,7 +37,7 @@ func Configure() Config {
 		log.Fatalf("Failed to configure logger: %v", err)
 	}
 
-	if strings.HasPrefix(strings.ToLower(cfg.Env), "dev") {
+	if cfg.IsDevEnv() {
 		absPath, err := filepath.Abs("../../.env")
 		err = cleanenv.ReadConfig(absPath, &cfg)
 		if err != nil {

@@ -1,6 +1,7 @@
 package cmdhandler
 
 import (
+	dh "github.com/gitrus/digikeeper-bot/pkg/telego_default_handlers"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
@@ -25,7 +26,7 @@ func (ch *CommandHandlerGroup) RegisterCommand(command string, handler th.Handle
 	ch.commands[command] = registeredHandler{h: handler, d: description}
 
 	ch.commands["help"] = registeredHandler{
-		h: HandleHelpFabric(ch.getCommandToDescription()),
+		h: dh.HandleHelpFabric(ch.getCommandToDescription()),
 		d: "Show help message with available commands",
 	}
 }
@@ -33,19 +34,19 @@ func (ch *CommandHandlerGroup) RegisterCommand(command string, handler th.Handle
 func (ch *CommandHandlerGroup) RegisterGroup(bh *th.BotHandler) {
 	commands := bh.Group(th.AnyCommand())
 
-	predicats := make([]th.Predicate, 0, len(ch.commands))
+	predicates := make([]th.Predicate, 0, len(ch.commands))
 	for command, handler := range ch.commands {
 		p := th.CommandEqual(command)
 		commands.Handle(handler.h, p)
-		predicats = append(predicats, p)
+		predicates = append(predicates, p)
 	}
 
 	// handle unknown command
-	var unknownPredicat th.Predicate = th.None()
-	for _, predicat := range predicats {
-		unknownPredicat = th.Or(unknownPredicat, th.Not(predicat))
+	var unknownPredicate th.Predicate = th.None()
+	for _, predicate := range predicates {
+		unknownPredicate = th.Or(unknownPredicate, th.Not(predicate))
 	}
-	commands.Handle(HandleUnknownCommand, unknownPredicat)
+	commands.Handle(dh.HandleUnknownCommand, unknownPredicate)
 }
 
 func (ch *CommandHandlerGroup) getCommandToDescription() map[string]string {

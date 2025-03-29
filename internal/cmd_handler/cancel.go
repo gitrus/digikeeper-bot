@@ -16,16 +16,22 @@ type UserStateManager interface {
 }
 
 func HandleCancel(usm UserStateManager) th.Handler {
-	return func(bot *telego.Bot, update telego.Update) {
+	return func(ctx *th.Context, update telego.Update) error {
 		slog.InfoContext(update.Context(), "Receive /cancel", loggingctx.GetLogAttrs(update.Context())...)
 
 		userID := update.Message.From.ID
 		usm.DropActiveState(userID)
 
 		chatId := tu.ID(update.Message.Chat.ID)
-		_, _ = bot.SendMessage(tu.Message(
+		_, err := ctx.Bot().SendMessage(ctx, tu.Message(
 			chatId,
 			"I just interrupted the current operation/s. What can I do for you now?",
 		))
+		if err != nil {
+			slog.ErrorContext(update.Context(), "Failed to send message", loggingctx.GetLogAttrs(update.Context())...)
+			return err
+		}
+
+		return nil
 	}
 }

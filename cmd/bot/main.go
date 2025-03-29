@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 
-	ic "github.com/WAY29/icecream-go/icecream"
-	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
 	cmdh "github.com/gitrus/digikeeper-bot/internal/cmd_handler"
@@ -13,18 +13,12 @@ import (
 )
 
 func main() {
-	config := Configure()
+	config := configure()
+	logger := slog.Default()
 
-	bot, err := telego.NewBot(config.BotKey, telego.WithDefaultDebugLogger())
-	if err != nil {
-		log.Fatalf("Failed to start bot: %v", err)
-	}
+	ctx := context.Background()
 
-	updates, err := bot.UpdatesViaLongPolling(nil)
-	if err != nil {
-		log.Fatalf("Failed to start bot: %v", err)
-	}
-	defer bot.StopLongPolling()
+	bot, updates, err := initBot(ctx, config)
 
 	bh, err := th.NewBotHandler(bot, updates)
 	if err != nil {
@@ -36,7 +30,7 @@ func main() {
 	bh.Use(th.PanicRecovery())
 	bh.Use(th.Timeout(config.CommonTimeout))
 
-	bh.Use(telegomiddleware.SlogAddAttrs())
+	bh.Use(telegomiddleware.AddSlogAttrs())
 
 	usm := telegomiddleware.NewMockUserStateManager[string]()
 	useStateMiddleware := telegomiddleware.NewUserStateMiddleware(usm)
@@ -49,6 +43,8 @@ func main() {
 
 	cmdHandlerGroup.RegisterGroup(bh)
 
-	ic.Ic("basegroup", bh.BaseGroup())
+	logger.Info("CmdHandlerGroup", "group", cmdHandlerGroup)
+
+	logger.Info("Starting bot ...")
 	bh.Start()
 }

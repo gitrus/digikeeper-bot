@@ -67,7 +67,7 @@ func InitLogger(environ string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("Fail at init zap logger %s", err)
+		return fmt.Errorf("Fail at init zap logger %w", err)
 	}
 
 	handler := zapslog.NewHandler(logger.Core())

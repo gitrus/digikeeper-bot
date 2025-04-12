@@ -14,13 +14,14 @@ func initBot(ctx context.Context, cfg Config) (*telego.Bot, <-chan telego.Update
 		log.Fatalf("Failed to start bot: %v", err)
 	}
 
+	var upd <-chan telego.Update
 	if !cfg.IsDevEnv() {
-		upd, err := initWebHookBot(ctx, cfg, bot)
-		return bot, upd, err
+		upd, err = initWebHookBot(ctx, cfg, bot)
 	} else {
-		upd, err := initPollingBot(ctx, cfg, bot)
-		return bot, upd, err
+		upd, err = initPollingBot(ctx, cfg, bot)
 	}
+
+	return bot, upd, err
 }
 
 func initWebHookBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan telego.Update, error) {
@@ -43,7 +44,6 @@ func initWebHookBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan te
 	)
 
 	return updates, err
-
 }
 
 func initPollingBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan telego.Update, error) {

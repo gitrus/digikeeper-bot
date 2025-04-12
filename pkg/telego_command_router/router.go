@@ -1,7 +1,6 @@
-package cmdhandler
+package telegocommandrouter
 
 import (
-	dh "github.com/gitrus/digikeeper-bot/pkg/telego_default_handlers"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
@@ -14,7 +13,7 @@ type CommandHandlerGroup struct {
 	commands map[string]registeredHandler
 }
 
-func NewCommandHandlerGroup(usm UserStateManager) *CommandHandlerGroup {
+func NewCommandHandlerGroup() *CommandHandlerGroup {
 	chg := &CommandHandlerGroup{
 		commands: make(map[string]registeredHandler),
 	}
@@ -26,7 +25,7 @@ func (ch *CommandHandlerGroup) RegisterCommand(command string, handler th.Handle
 	ch.commands[command] = registeredHandler{h: handler, d: description}
 
 	ch.commands["help"] = registeredHandler{
-		h: dh.HandleHelpFabric(ch.getCommandToDescription()),
+		h: HandleHelpFabric(ch.getCommandToDescription()),
 		d: "Show help message with available commands",
 	}
 }
@@ -46,7 +45,7 @@ func (ch *CommandHandlerGroup) RegisterGroup(bh *th.BotHandler) {
 	for _, predicate := range predicates {
 		unknownPredicate = th.Or(unknownPredicate, th.Not(predicate))
 	}
-	commands.Handle(dh.HandleUnknownCommand, unknownPredicate)
+	commands.Handle(HandleUnknownCommand, unknownPredicate)
 }
 
 func (ch *CommandHandlerGroup) getCommandToDescription() map[string]string {

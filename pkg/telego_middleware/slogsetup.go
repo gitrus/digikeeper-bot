@@ -16,18 +16,16 @@ func firstNRunes(s string, n int) string {
 
 func AddSlogAttrs() th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-
-		innerCtx := ctx.Context()
-		innerCtx = loggingctx.AddLogAttr(ctx, "update_id", update.UpdateID)
+		innerCtx := loggingctx.AddLogAttr(ctx, "update_id", update.UpdateID)
 		if update.Message != nil {
-			innerCtx = loggingctx.AddLogAttr(ctx, "message_id", update.Message.MessageID)
-			innerCtx = loggingctx.AddLogAttr(ctx, "text_first10", firstNRunes(update.Message.Text, 10))
+			innerCtx = loggingctx.AddLogAttr(innerCtx, "message_id", update.Message.MessageID)
+			innerCtx = loggingctx.AddLogAttr(innerCtx, "text_first10", firstNRunes(update.Message.Text, 10))
 
 			if update.Message.From != nil {
-				innerCtx = loggingctx.AddLogAttr(ctx, "user_id", update.Message.From.ID)
+				innerCtx = loggingctx.AddLogAttr(innerCtx, "user_id", update.Message.From.ID)
 			}
 			if update.Message.Chat.ID != 0 {
-				innerCtx = loggingctx.AddLogAttr(ctx, "chat_id", update.Message.Chat.ID)
+				innerCtx = loggingctx.AddLogAttr(innerCtx, "chat_id", update.Message.Chat.ID)
 			}
 		}
 

@@ -39,6 +39,9 @@ func configure() Config {
 
 	if cfg.IsDevEnv() {
 		absPath, err := filepath.Abs("../../.env")
+		if err != nil {
+			log.Fatalf("Failed to get .env: %v", err)
+		}
 		err = cleanenv.ReadConfig(absPath, &cfg)
 		if err != nil {
 			log.Fatalf("Failed to get .env: %v", err)

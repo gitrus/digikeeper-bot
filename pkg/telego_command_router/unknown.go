@@ -1,4 +1,4 @@
-package cmdhandler
+package telegocommandrouter
 
 import (
 	"log/slog"

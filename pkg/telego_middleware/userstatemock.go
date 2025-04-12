@@ -35,7 +35,6 @@ func (m *MockUserStateManager[S]) InitState(userID int64) (S, error) {
 
 func (m *MockUserStateManager[S]) DropActiveState(userID int64) {
 	m.states.Delete(userID)
-	return
 }
 
 func (m *MockUserStateManager[S]) Set(userID int64, state S) (S, error) {
@@ -43,7 +42,7 @@ func (m *MockUserStateManager[S]) Set(userID int64, state S) (S, error) {
 
 	var ok bool
 	for range 10 {
-		if ok := m.states.CompareAndSwap(userID, oldState, state); ok {
+		if ok = m.states.CompareAndSwap(userID, oldState, state); ok {
 			return state, nil
 		}
 		// cast loop

@@ -6,7 +6,8 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
-func firstNRunes(s string, n int) string {
+// FirstNRunes returns the first n runes of a string
+func FirstNRunes(s string, n int) string {
 	runes := []rune(s)
 	if n > len(runes) {
 		n = len(runes)
@@ -16,20 +17,26 @@ func firstNRunes(s string, n int) string {
 
 func AddSlogAttrs() th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		innerCtx := loggingctx.AddLogAttr(ctx, "update_id", update.UpdateID)
-		if update.Message != nil {
-			innerCtx = loggingctx.AddLogAttr(innerCtx, "message_id", update.Message.MessageID)
-			innerCtx = loggingctx.AddLogAttr(innerCtx, "text_first10", firstNRunes(update.Message.Text, 10))
+		origCtx := ctx.Context()
 
-			if update.Message.From != nil {
-				innerCtx = loggingctx.AddLogAttr(innerCtx, "user_id", update.Message.From.ID)
-			}
-			if update.Message.Chat.ID != 0 {
-				innerCtx = loggingctx.AddLogAttr(innerCtx, "chat_id", update.Message.Chat.ID)
-			}
+		innerCtx := loggingctx.AddLogAttr(origCtx, "update_id", update.UpdateID)
+
+		if update.Message == nil {
+			ctx = ctx.WithContext(innerCtx)
+			return ctx.Next(update)
 		}
 
-		ctx.WithContext(innerCtx)
+		// Add more attributes for messages
+		innerCtx = loggingctx.AddLogAttr(innerCtx, "message_id", update.Message.MessageID)
+		innerCtx = loggingctx.AddLogAttr(innerCtx, "text_first10", FirstNRunes(update.Message.Text, 10))
+
+		if update.Message.From != nil {
+			innerCtx = loggingctx.AddLogAttr(innerCtx, "user_id", update.Message.From.ID)
+		}
+
+		innerCtx = loggingctx.AddLogAttr(innerCtx, "chat_id", update.Message.Chat.ID)
+
+		ctx = ctx.WithContext(innerCtx)
 
 		return ctx.Next(update)
 	}

@@ -13,24 +13,35 @@ import (
 
 type contextKey string
 
-const logAttrsKey contextKey = "log_attrs"
+// LogAttrsKey is the context key used for storing logging attributes
+const LogAttrsKey contextKey = "LogAttrsKey"
 
-// AddLogAttr adds a logging attribute to the provided context.
-//
-// Note: Attributes is a slice, so if there is already an attribute with the same key,
-// the new attribute is appended to the existing slice.
+// AddLogAttr adds a logging attribute to the provided context
 func AddLogAttr(ctx context.Context, key string, value any) context.Context {
-	attrs, ok := ctx.Value(logAttrsKey).([]slog.Attr)
+	attrs, ok := ctx.Value(LogAttrsKey).([]slog.Attr)
 	if !ok {
 		attrs = []slog.Attr{}
 	}
-	attrs = append(attrs, slog.Any(key, value))
-	return context.WithValue(ctx, logAttrsKey, attrs)
+
+	found := false
+	for i := range attrs {
+		if attrs[i].Key == key {
+			attrs[i].Value = slog.AnyValue(value)
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		attrs = append(attrs, slog.Any(key, value))
+	}
+
+	return context.WithValue(ctx, LogAttrsKey, attrs)
 }
 
-// GetLogAttrs retrieves logging attributes slice from the context.
+// GetLogAttrs retrieves logging attributes slice from the context
 func GetLogAttrs(ctx context.Context) []any {
-	attrs, ok := ctx.Value(logAttrsKey).([]slog.Attr)
+	attrs, ok := ctx.Value(LogAttrsKey).([]slog.Attr)
 	if !ok {
 		return []any{}
 	}
@@ -42,7 +53,7 @@ func GetLogAttrs(ctx context.Context) []any {
 	return anyattr
 }
 
-func InitLogger(environ string) error {
+func InitLogger(environ string) (*slog.Logger, error) {
 	var logger *zap.Logger
 	var err error
 	if strings.HasPrefix(environ, "dev") {
@@ -67,11 +78,11 @@ func InitLogger(environ string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("Fail at init zap logger %w", err)
+		return nil, fmt.Errorf("Fail at init zap logger %w", err)
 	}
 
 	handler := zapslog.NewHandler(logger.Core())
+	slogLogger := slog.New(handler)
 
-	slog.SetDefault(slog.New(handler))
-	return nil
+	return slogLogger, nil
 }

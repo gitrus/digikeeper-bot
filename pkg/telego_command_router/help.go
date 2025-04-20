@@ -10,24 +10,31 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-func HandleHelpFabric(cmdDescriptions map[string]string) th.Handler {
+// NewHelpHandler creates a handler function for the /help command.
+// It generates a help message listing available commands based on the provided descriptions.
+func NewHelpHandler(cmdDescriptions map[string]string) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		logAttrs := loggingctx.GetLogAttrs(update.Context())
-		slog.InfoContext(update.Context(), "Receive /help", logAttrs...)
+		logAttrs := loggingctx.GetLogAttrs(ctx.Context())
+		slog.InfoContext(ctx.Context(), "Receive /help", logAttrs...)
 
 		helpMessageBuilder := strings.Builder{}
+		helpMessageBuilder.WriteString("Available commands:\n")
 		helpMessageBuilder.WriteString("/help    Show this help message\n")
 		for command, description := range cmdDescriptions {
 			if command == "help" {
 				continue
 			}
 			helpMessageBuilder.WriteString("/" + command)
-			helpMessageBuilder.WriteString("   " + description)
+			helpMessageBuilder.WriteString("    " + description)
 			helpMessageBuilder.WriteString("\n")
 		}
 
-		chatId := tu.ID(update.Message.Chat.ID)
-		_, err := ctx.Bot().SendMessage(ctx, tu.Message(chatId, helpMessageBuilder.String()))
+		chatID := tu.ID(update.Message.Chat.ID)
+		_, err := ctx.Bot().SendMessage(ctx, tu.Message(chatID, helpMessageBuilder.String()))
+
+		if err != nil {
+			slog.ErrorContext(ctx.Context(), "Failed to send help message", append(logAttrs, slog.Any("error", err))...)
+		}
 
 		return err
 	}

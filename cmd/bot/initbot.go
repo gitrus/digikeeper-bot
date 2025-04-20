@@ -9,7 +9,7 @@ import (
 )
 
 func initBot(ctx context.Context, cfg Config) (*telego.Bot, <-chan telego.Update, error) {
-	bot, err := telego.NewBot(cfg.BotKey, telego.WithDefaultDebugLogger())
+	bot, err := telego.NewBot(cfg.Telegram.BotKey.String(), telego.WithDefaultDebugLogger())
 	if err != nil {
 		log.Fatalf("Failed to start bot: %v", err)
 	}
@@ -26,9 +26,9 @@ func initBot(ctx context.Context, cfg Config) (*telego.Bot, <-chan telego.Update
 
 func initWebHookBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan telego.Update, error) {
 	err := bot.SetWebhook(ctx, &telego.SetWebhookParams{
-		URL:            cfg.BotPublicURL,
+		URL:            cfg.Telegram.PublicURL,
 		SecretToken:    bot.Token(),
-		AllowedUpdates: cfg.AllowedUpdates,
+		AllowedUpdates: cfg.Telegram.AllowedUpdates,
 	})
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func initWebHookBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan te
 func initPollingBot(ctx context.Context, cfg Config, bot *telego.Bot) (<-chan telego.Update, error) {
 	updates, err := bot.UpdatesViaLongPolling(
 		ctx,
-		&telego.GetUpdatesParams{AllowedUpdates: cfg.AllowedUpdates},
+		&telego.GetUpdatesParams{AllowedUpdates: cfg.Telegram.AllowedUpdates},
 	)
 	return updates, err
 }

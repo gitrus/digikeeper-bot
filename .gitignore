@@ -36,3 +36,7 @@ go.work.sum
 # COMMON
 tmp/
 ./bot
+
+# llm
+llm-tasks/
+CLAUDE.md

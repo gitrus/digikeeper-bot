@@ -32,12 +32,12 @@ func main() {
 
 	// Add global middleware, it will be applied in order of addition
 	bh.Use(th.PanicRecovery())
-	bh.Use(th.Timeout(config.CommonTimeout))
+	bh.Use(th.Timeout(config.Common.Timeout))
 
 	bh.Use(telegomiddleware.AddSlogAttrs())
 
 	usm := telegomiddleware.NewMockUserStateManager[string]()
-	useStateMiddleware := telegomiddleware.NewUserStateMiddleware(usm)
+	useStateMiddleware := telegomiddleware.NewUserStateMiddleware[string](usm)
 	bh.Use(useStateMiddleware.Middleware())
 
 	cmdHandlerGroup := cmdrouter.NewCommandHandlerGroup()
@@ -45,7 +45,7 @@ func main() {
 	cmdHandlerGroup.RegisterCommand("cancel", cmdh.HandleCancel(usm), "Interrupt any current operation/s")
 	cmdHandlerGroup.RegisterCommand("add", cmdh.HandleAdd(usm), "Add new note to the list")
 
-	cmdHandlerGroup.RegisterGroup(bh)
+	cmdHandlerGroup.BindCommandsToHandler(bh)
 
 	logger.Info("CmdHandlerGroup", "group", cmdHandlerGroup)
 

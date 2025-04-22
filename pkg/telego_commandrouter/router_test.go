@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	tcr "github.com/gitrus/digikeeper-bot/pkg/telego_command_router"
+	tcr "github.com/gitrus/digikeeper-bot/pkg/telego_commandrouter"
 )
 
 type MockBotHandler struct {

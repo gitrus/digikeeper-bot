@@ -7,8 +7,8 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	cmdh "github.com/gitrus/digikeeper-bot/internal/cmd_handler"
-	cmdrouter "github.com/gitrus/digikeeper-bot/pkg/telego_command_router"
-	telegomiddleware "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
+	cmdrouter "github.com/gitrus/digikeeper-bot/pkg/telego_commandrouter"
+	middleware "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
 )
 
 func main() {
@@ -34,10 +34,10 @@ func main() {
 	bh.Use(th.PanicRecovery())
 	bh.Use(th.Timeout(config.Common.Timeout))
 
-	bh.Use(telegomiddleware.AddSlogAttrs())
+	bh.Use(middleware.AddUpdateSlogAttrs())
 
-	usm := telegomiddleware.NewMockUserStateManager[string]()
-	useStateMiddleware := telegomiddleware.NewUserStateMiddleware[string](usm)
+	usm := middleware.NewMockUserStateManager[string]()
+	useStateMiddleware := middleware.NewUserStateMiddleware[string](usm)
 	bh.Use(useStateMiddleware.Middleware())
 
 	cmdHandlerGroup := cmdrouter.NewCommandHandlerGroup()

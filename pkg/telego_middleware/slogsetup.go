@@ -1,6 +1,8 @@
 package telegomiddleware
 
 import (
+	"log/slog"
+
 	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
@@ -15,7 +17,7 @@ func FirstNRunes(s string, n int) string {
 	return string(runes[:n])
 }
 
-func AddSlogAttrs() th.Handler {
+func AddUpdateSlogAttrs() th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
 		origCtx := ctx.Context()
 
@@ -27,14 +29,15 @@ func AddSlogAttrs() th.Handler {
 		}
 
 		// Add more attributes for messages
-		innerCtx = loggingctx.AddLogAttr(innerCtx, "message_id", update.Message.MessageID)
-		innerCtx = loggingctx.AddLogAttr(innerCtx, "text_first10", FirstNRunes(update.Message.Text, 10))
+		innerCtx = loggingctx.AddLogAttrs(innerCtx, []slog.Attr{
+			slog.Int("message_id", update.Message.MessageID),
+			slog.String("text_first10", FirstNRunes(update.Message.Text, 10)),
+			slog.Int64("chat_id", update.Message.Chat.ID),
+		})
 
 		if update.Message.From != nil {
 			innerCtx = loggingctx.AddLogAttr(innerCtx, "user_id", update.Message.From.ID)
 		}
-
-		innerCtx = loggingctx.AddLogAttr(innerCtx, "chat_id", update.Message.Chat.ID)
 
 		ctx = ctx.WithContext(innerCtx)
 

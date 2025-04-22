@@ -1,3 +1,22 @@
+// Package loggingctx provides structured logging support through context propagation.
+//
+// This package includes:
+// - adding slog attributes to a context
+// - retrieving slog attributes from a context
+// - initializing zap logger for slog
+//
+// Examples:
+//
+//	// Add attributes to context
+//	ctx = loggingctx.AddLogAttr(ctx, "user_id", userId)
+//	ctx = loggingctx.AddLogAttr(ctx, "request_id", requestId)
+//
+//	// Initialize zap logger for slog
+//	logger := loggingctx.InitZapLogger()
+//	slog.SetDefault(logger)
+//
+//	// Later in the request flow, retrieve all attributes for logging
+//	slog.InfoContext(ctx, "User action completed", loggingctx.GetLogAttrs(ctx)...)
 package loggingctx
 
 import (
@@ -18,25 +37,38 @@ const LogAttrsKey contextKey = "LogAttrsKey"
 
 // AddLogAttr adds a logging attribute to the provided context
 func AddLogAttr(ctx context.Context, key string, value any) context.Context {
-	attrs, ok := ctx.Value(LogAttrsKey).([]slog.Attr)
+	return AddLogAttrs(ctx, []slog.Attr{slog.Any(key, value)})
+}
+
+// AddLogAttr adds a logging attributes list to the provided context
+func AddLogAttrs(ctx context.Context, attrs []slog.Attr) context.Context {
+	logAttrs, ok := ctx.Value(LogAttrsKey).([]slog.Attr)
 	if !ok {
-		attrs = []slog.Attr{}
+		logAttrs = make([]slog.Attr, 0, 9)
 	}
 
-	found := false
-	for i := range attrs {
-		if attrs[i].Key == key {
-			attrs[i].Value = slog.AnyValue(value)
-			found = true
-			break
+	existAttrs := make(map[string]slog.Attr, len(logAttrs))
+	for _, attr := range logAttrs {
+		existAttrs[attr.Key] = attr
+	}
+
+	newAttrs := make([]slog.Attr, 0, len(attrs))
+	for _, attr := range attrs {
+		if _, ok := existAttrs[attr.Key]; ok {
+			existAttrs[attr.Key] = attr
 		}
+		newAttrs = append(newAttrs, attr)
 	}
 
-	if !found {
-		attrs = append(attrs, slog.Any(key, value))
+	result := make([]slog.Attr, 0, len(existAttrs)+len(newAttrs))
+	for _, attr := range existAttrs {
+		result = append(result, attr)
+	}
+	if len(newAttrs) > 0 {
+		result = append(result, newAttrs...)
 	}
 
-	return context.WithValue(ctx, LogAttrsKey, attrs)
+	return context.WithValue(ctx, LogAttrsKey, result)
 }
 
 // GetLogAttrs retrieves logging attributes slice from the context
@@ -54,6 +86,7 @@ func GetLogAttrs(ctx context.Context) []any {
 }
 
 func InitLogger(environ string) (*slog.Logger, error) {
+	// environ in [dev, <any-else>]
 	var logger *zap.Logger
 	var err error
 	if strings.HasPrefix(environ, "dev") {

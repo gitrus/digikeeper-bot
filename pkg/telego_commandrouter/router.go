@@ -3,6 +3,7 @@ package telegocommandrouter
 import (
 	"log/slog"
 
+	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 )
 
@@ -50,12 +51,29 @@ func (ch *CommandHandlerGroup) RegisterCommand(command string, handler th.Handle
 // ch.RegisterCommand("stop", HandleStopCommand, "Stop the bot")
 // ch.BindCommandsToHandler(bh)
 func (ch *CommandHandlerGroup) BindCommandsToHandler(bh BotHandlerGroup) {
+	slog.Info("Binding command handlers", "commands", ch.getCommandToDescription())
+
 	commands := bh.Group(th.AnyCommand())
+
+	// Add a debug handler to log all incoming commands
+	commands.Handle(func(ctx *th.Context, update telego.Update) error {
+		if update.Message != nil && update.Message.Text != "" {
+			slog.Info("Command received", "text", update.Message.Text)
+		}
+		return ctx.Next(update)
+	})
 
 	predicates := make([]th.Predicate, 0, len(ch.commands))
 	for command, rh := range ch.commands {
 		p := th.CommandEqual(command)
-		commands.Handle(rh.Handler, p)
+		// Wrap each handler with debug logging
+		handlerWithLogging := func(originalHandler th.Handler) th.Handler {
+			return func(ctx *th.Context, update telego.Update) error {
+				slog.Info("Handling command", "command", command)
+				return originalHandler(ctx, update)
+			}
+		}(rh.Handler)
+		commands.Handle(handlerWithLogging, p)
 		predicates = append(predicates, p)
 	}
 
@@ -65,7 +83,7 @@ func (ch *CommandHandlerGroup) BindCommandsToHandler(bh BotHandlerGroup) {
 	)
 	predicates = append(predicates, helpP)
 
-	slog.Debug("Binded predicates", "predicates", predicates)
+	slog.Info("Bound predicates", "predicates", predicates)
 
 	commands.Handle(
 		NewUnknownCommandHandler(DefaultUnknownCommandMessage), th.AnyCommand(),

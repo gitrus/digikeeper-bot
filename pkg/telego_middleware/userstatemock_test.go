@@ -3,13 +3,13 @@ package telegomiddleware_test
 import (
 	"testing"
 
-	"github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
+	middleware "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMockUserStateManager(t *testing.T) {
 	// Create mock manager
-	manager := telegomiddleware.NewMockUserStateManager[string]()
+	manager := middleware.NewMockUserStateManager[string]()
 	assert.NotNil(t, manager)
 
 	// Test InitState - should create a new state

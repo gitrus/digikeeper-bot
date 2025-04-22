@@ -1,15 +1,17 @@
-package telegomiddleware
+package telegomiddleware_test
 
 import (
 	"log/slog"
 	"sync"
 	"testing"
 
-	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
+	tm "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
 )
 
 // Test the firstNRunes function
@@ -48,15 +50,15 @@ func TestFirstNRunes(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result := FirstNRunes(tc.input, tc.n)
+			result := tm.FirstNRunes(tc.input, tc.n)
 			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
 
 // Test that AddSlogAttrs returns a function and checks its behavior
-func TestAddSlogAttrs(t *testing.T) {
-	handler := AddSlogAttrs()
+func TestAddSlogAttrsTyping(t *testing.T) {
+	handler := tm.AddUpdateSlogAttrs()
 	assert.NotNil(t, handler, "AddSlogAttrs should return a non-nil handler")
 
 	handlerType := assert.IsType(
@@ -113,7 +115,7 @@ func TestAddSlogAttrsHandle(t *testing.T) {
 		return nil
 	}
 
-	bh.Use(AddSlogAttrs())
+	bh.Use(tm.AddUpdateSlogAttrs())
 	bh.HandleMessage(handler)
 
 	go bh.Start()

@@ -21,6 +21,7 @@ var startKeyboard = tu.Keyboard(
 ).WithResizeKeyboard().WithInputFieldPlaceholder("Select action")
 
 func HandleStart(ctx *th.Context, update telego.Update) error {
+	slog.InfoContext(ctx.Context(), "Receive /start", loggingctx.GetLogAttrs(ctx.Context())...)
 	chatId := tu.ID(update.Message.Chat.ID)
 	_, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		chatId,
@@ -29,8 +30,6 @@ func HandleStart(ctx *th.Context, update telego.Update) error {
 	if err != nil {
 		return err
 	}
-
-	slog.InfoContext(ctx.Context(), "Receive /start", loggingctx.GetLogAttrs(ctx.Context())...)
 
 	return nil
 }

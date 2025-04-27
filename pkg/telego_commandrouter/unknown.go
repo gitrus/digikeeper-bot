@@ -3,7 +3,6 @@ package telegocommandrouter
 import (
 	"log/slog"
 
-	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -20,8 +19,7 @@ func NewUnknownCommandHandler(unknownCommandMsg string) th.Handler {
 		slog.InfoContext(
 			ctx.Context(),
 			"Unknown command",
-			append(loggingctx.GetLogAttrs(ctx.Context()),
-				slog.String("command", cmd))...,
+			slog.String("command", cmd),
 		)
 
 		chatID := tu.ID(update.Message.Chat.ID)
@@ -31,7 +29,7 @@ func NewUnknownCommandHandler(unknownCommandMsg string) th.Handler {
 		))
 
 		if err != nil {
-			slog.ErrorContext(ctx.Context(), "Failed to send unknown command message", append(loggingctx.GetLogAttrs(ctx.Context()), slog.Any("error", err))...)
+			slog.ErrorContext(ctx.Context(), "Failed to send unknown command message", slog.Any("error", err))
 		}
 
 		return err

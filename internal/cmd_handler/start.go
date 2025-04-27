@@ -6,8 +6,6 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
-
-	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 )
 
 var startKeyboard = tu.Keyboard(
@@ -21,7 +19,7 @@ var startKeyboard = tu.Keyboard(
 ).WithResizeKeyboard().WithInputFieldPlaceholder("Select action")
 
 func HandleStart(ctx *th.Context, update telego.Update) error {
-	slog.InfoContext(ctx.Context(), "Receive /start", loggingctx.GetLogAttrs(ctx.Context())...)
+	slog.InfoContext(ctx.Context(), "Receive /start")
 	chatId := tu.ID(update.Message.Chat.ID)
 	_, err := ctx.Bot().SendMessage(ctx, tu.Message(
 		chatId,

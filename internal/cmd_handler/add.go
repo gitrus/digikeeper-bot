@@ -7,17 +7,27 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 
-	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
+	session "github.com/gitrus/digikeeper-bot/pkg/sessionmanager"
 )
 
-func HandleAdd(usm UserStateManager) th.Handler {
+func HandleAdd(usm session.UserSessionManager[*session.SimpleUserSession]) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		slog.InfoContext(update.Context(), "Receive /add", loggingctx.GetLogAttrs(update.Context())...)
+		slog.InfoContext(update.Context(), "Receive /add")
 
 		userID := update.Message.From.ID
-		state, err := usm.Set(userID, "add")
+		state, err := usm.Fetch(ctx, userID)
 		if err != nil {
-			slog.ErrorContext(update.Context(), "Failed to set state", loggingctx.GetLogAttrs(update.Context())...)
+			return err
+		}
+
+		_, err = usm.Set(
+			ctx,
+			userID,
+			&session.SimpleUserSession{UserID: userID, State: "add", Version: state.Version + 1},
+			state.Version,
+		)
+		if err != nil {
+			slog.ErrorContext(update.Context(), "Failed to set state")
 
 			chatId := tu.ID(update.Message.Chat.ID)
 			_, err = ctx.Bot().SendMessage(ctx, tu.Message(
@@ -27,8 +37,7 @@ func HandleAdd(usm UserStateManager) th.Handler {
 			return err
 		}
 
-		logAttrs := append(loggingctx.GetLogAttrs(update.Context()), slog.String("state", state))
-		slog.InfoContext(update.Context(), "Set state", logAttrs...)
+		slog.InfoContext(update.Context(), "Set state", slog.String("state", state.State))
 		return nil
 	}
 }

@@ -8,7 +8,8 @@ import (
 
 	cmdh "github.com/gitrus/digikeeper-bot/internal/cmd_handler"
 	cmdrouter "github.com/gitrus/digikeeper-bot/pkg/telego_commandrouter"
-	middleware "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
+	tm "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
+	session "github.com/gitrus/digikeeper-bot/pkg/sessionmanager"
 )
 
 func main() {
@@ -34,10 +35,10 @@ func main() {
 	bh.Use(th.PanicRecovery())
 	bh.Use(th.Timeout(config.Common.Timeout))
 
-	bh.Use(middleware.AddUpdateSlogAttrs())
+	bh.Use(tm.AddUpdateSlogAttrs())
 
-	usm := middleware.NewMockUserStateManager[string]()
-	useStateMiddleware := middleware.NewUserStateMiddleware[string](usm)
+	usm := session.NewUserSessionManagerInMem[*session.SimpleUserSession](session.NewSimpleUserSession)
+	useStateMiddleware := tm.NewUserSessionMiddleware[*session.SimpleUserSession](usm)
 	bh.Use(useStateMiddleware.Middleware())
 
 	cmdHandlerGroup := cmdrouter.NewCommandHandlerGroup()

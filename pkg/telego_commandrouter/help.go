@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/gitrus/digikeeper-bot/pkg/loggingctx"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -14,8 +13,7 @@ import (
 // It generates a help message listing available commands based on the provided descriptions.
 func NewHelpHandler(cmdDescriptions map[string]string) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		logAttrs := loggingctx.GetLogAttrs(ctx.Context())
-		slog.InfoContext(ctx.Context(), "Receive /help", logAttrs...)
+		slog.InfoContext(ctx.Context(), "Receive /help")
 
 		helpMessageBuilder := strings.Builder{}
 		helpMessageBuilder.WriteString("Available commands:\n")
@@ -33,7 +31,7 @@ func NewHelpHandler(cmdDescriptions map[string]string) th.Handler {
 		_, err := ctx.Bot().SendMessage(ctx, tu.Message(chatID, helpMessageBuilder.String()))
 
 		if err != nil {
-			slog.ErrorContext(ctx.Context(), "Failed to send help message", append(logAttrs, slog.Any("error", err))...)
+			slog.ErrorContext(ctx.Context(), "Failed to send help message", slog.Any("error", err))
 		}
 
 		return err

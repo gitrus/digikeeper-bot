@@ -3,7 +3,7 @@
 // This package includes:
 // - adding slog attributes to a context
 // - retrieving slog attributes from a context
-// - initializing zap logger for slog
+// - initializing zap logger for slog with automatic context attribute extraction
 //
 // Examples:
 //
@@ -11,12 +11,16 @@
 //	ctx = loggingctx.AddLogAttr(ctx, "user_id", userId)
 //	ctx = loggingctx.AddLogAttr(ctx, "request_id", requestId)
 //
-//	// Initialize zap logger for slog
-//	logger := loggingctx.InitZapLogger()
+//	// Initialize zap logger for slog with context attribute support
+//	logger, err := loggingctx.InitLogger("dev")
+//	if err != nil {
+//		// handle error
+//	}
 //	slog.SetDefault(logger)
 //
-//	// Later in the request flow, retrieve all attributes for logging
-//	slog.InfoContext(ctx, "User action completed", loggingctx.GetLogAttrs(ctx)...)
+//	// Later in the request flow, context attributes are automatically included
+//	// No need to manually pass GetLogAttrs
+//	slog.InfoContext(ctx, "User action completed")
 package loggingctx
 
 import (
@@ -85,6 +89,40 @@ func GetLogAttrs(ctx context.Context) []any {
 	return anyattr
 }
 
+// ContextHandler is a custom slog handler that
+// includes context attributes from LogAttrsKey
+type ContextHandler struct {
+	handler slog.Handler
+}
+
+// Handle implements slog.Handler.Handle by adding attributes from context automatically
+func (h *ContextHandler) Handle(ctx context.Context, record slog.Record) error {
+	if ctx == nil {
+		return h.handler.Handle(ctx, record)
+	}
+
+	attrs, ok := ctx.Value(LogAttrsKey).([]slog.Attr)
+	if ok && len(attrs) > 0 {
+		for _, attr := range attrs {
+			record.AddAttrs(attr)
+		}
+	}
+
+	return h.handler.Handle(ctx, record)
+}
+
+func (h *ContextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &ContextHandler{handler: h.handler.WithAttrs(attrs)}
+}
+
+func (h *ContextHandler) WithGroup(name string) slog.Handler {
+	return &ContextHandler{handler: h.handler.WithGroup(name)}
+}
+
+func (h *ContextHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.handler.Enabled(ctx, level)
+}
+
 func InitLogger(environ string) (*slog.Logger, error) {
 	// environ in [dev, <any-else>]
 	var logger *zap.Logger
@@ -114,8 +152,9 @@ func InitLogger(environ string) (*slog.Logger, error) {
 		return nil, fmt.Errorf("Fail at init zap logger %w", err)
 	}
 
-	handler := zapslog.NewHandler(logger.Core())
-	slogLogger := slog.New(handler)
+	zapHandler := zapslog.NewHandler(logger.Core())
+	contextHandler := &ContextHandler{handler: zapHandler}
+	slogLogger := slog.New(contextHandler)
 
 	return slogLogger, nil
 }

@@ -58,7 +58,9 @@ func (ch *CommandHandlerGroup) BindCommandsToHandler(bh BotHandlerGroup) {
 	// Add a debug handler to log all incoming commands
 	commands.Handle(func(ctx *th.Context, update telego.Update) error {
 		if update.Message != nil && update.Message.Text != "" {
-			slog.Info("Command received", "text", update.Message.Text)
+			slog.DebugContext(
+				ctx.Context(), "Command received", "text", update.Message.Text,
+			)
 		}
 		return ctx.Next(update)
 	})
@@ -69,7 +71,9 @@ func (ch *CommandHandlerGroup) BindCommandsToHandler(bh BotHandlerGroup) {
 		// Wrap each handler with debug logging
 		handlerWithLogging := func(originalHandler th.Handler) th.Handler {
 			return func(ctx *th.Context, update telego.Update) error {
-				slog.Info("Handling command", "command", command)
+				slog.DebugContext(
+					ctx.Context(), "Handling command", "command", command,
+				)
 				return originalHandler(ctx, update)
 			}
 		}(rh.Handler)
@@ -83,7 +87,7 @@ func (ch *CommandHandlerGroup) BindCommandsToHandler(bh BotHandlerGroup) {
 	)
 	predicates = append(predicates, helpP)
 
-	slog.Info("Bound predicates", "predicates", predicates)
+	slog.Info("Bound predicates", slog.Int("predicates_len", len(predicates)))
 
 	commands.Handle(
 		NewUnknownCommandHandler(DefaultUnknownCommandMessage), th.AnyCommand(),

@@ -12,7 +12,7 @@ import (
 
 func HandleAdd(usm session.UserSessionManager[*session.SimpleUserSession]) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		slog.InfoContext(update.Context(), "Receive /add")
+		slog.InfoContext(ctx.Context(), "Receive /add")
 
 		userID := update.Message.From.ID
 		state, err := usm.Fetch(ctx, userID)
@@ -27,7 +27,7 @@ func HandleAdd(usm session.UserSessionManager[*session.SimpleUserSession]) th.Ha
 			state.Version,
 		)
 		if err != nil {
-			slog.ErrorContext(update.Context(), "Failed to set state")
+			slog.ErrorContext(ctx.Context(), "Failed to set state")
 
 			chatId := tu.ID(update.Message.Chat.ID)
 			_, err = ctx.Bot().SendMessage(ctx, tu.Message(
@@ -37,7 +37,7 @@ func HandleAdd(usm session.UserSessionManager[*session.SimpleUserSession]) th.Ha
 			return err
 		}
 
-		slog.InfoContext(update.Context(), "Set state", slog.String("state", state.State))
+		slog.InfoContext(ctx.Context(), "Set state", slog.String("state", state.State))
 		return nil
 	}
 }

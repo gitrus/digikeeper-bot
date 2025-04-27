@@ -12,7 +12,7 @@ import (
 
 func HandleCancel(usm session.UserSessionManager[*session.SimpleUserSession]) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		slog.InfoContext(update.Context(), "Receive /cancel")
+		slog.InfoContext(ctx.Context(), "Receive /cancel")
 
 		userID := update.Message.From.ID
 		usm.DropActive(ctx, userID)
@@ -23,7 +23,7 @@ func HandleCancel(usm session.UserSessionManager[*session.SimpleUserSession]) th
 			"I just interrupted the current operation/s. What can I do for you now?",
 		))
 		if err != nil {
-			slog.ErrorContext(update.Context(), "Failed to send message")
+			slog.ErrorContext(ctx.Context(), "Failed to send message")
 			return err
 		}
 

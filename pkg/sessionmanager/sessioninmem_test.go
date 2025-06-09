@@ -110,3 +110,27 @@ func TestUserSessionManagerInMem_FetchEmpty(t *testing.T) {
 		Reason: "user session not found for user ID 456",
 	}, err)
 }
+
+func TestUserSessionManagerInMem_SetVersionMismatch(t *testing.T) {
+	ctx := context.Background()
+	manager := sessionmanager.NewUserSessionManagerInMem[*MockSession](NewMockSession)
+	assert.NotNil(t, manager)
+	userID := int64(789)
+	state, err := manager.InitSession(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(t, &MockSession{}, state)
+
+	// act
+	newSession := &MockSession{State: "action", version: 2}
+	updatedState, err := manager.Set(ctx, userID, newSession, 1)
+
+	// assert
+	assert.Error(t, err)
+	assert.Equal(t, sessionmanager.ErrSessionManagement{Reason: "version mismatch"}, err)
+	assert.Equal(t, state, updatedState)
+
+	// verify stored session remains unchanged
+	fetchedState, err := manager.Fetch(ctx, userID)
+	assert.NoError(t, err)
+	assert.Equal(t, state, fetchedState)
+}

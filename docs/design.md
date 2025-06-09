@@ -36,9 +36,9 @@ Those problems grow as the complexity of the bot increases.
 A well-defined architecture is necessary to ensure testability and maintainability. In other words, it allows adding new features without breaking existing ones.
 
 ## Considered Options
-After research (including LLM assistance ofcourse), i have choosen the following directions:
-- Drawing inspiration from realizations of stateful protocols like TCP, SMTP, statefull SOAP and etc
-- Introducing User Session, which is usually avoidabel in REST API, but is necessary in bot interactions
+After research (including LLM assistance of course), I have chosen the following directions:
+- Drawing inspiration from realizations of stateful protocols like TCP, SMTP, stateful SOAP etc
+- Introducing User Session, which is usually avoidable in REST API, but is necessary in bot interactions
 
 ### Alternatives
 1. **Problem:** Multi-step interaction
@@ -88,7 +88,7 @@ My main goal is to describe a solution for a bot with several multi-step interac
 2. **User state between interactions**
    - **Default approach:** Store user state in global variable or in-memory storage. This approach has problems: durability, possible race conditions, not scalable and not testable.
    - **Option 1**: Introduce User Session entity. User session is a user info and state/states storage. It may be fetched from storage and added to each user request by middleware to fetch/save user session by userID. It will be used in handlers to get/set user state.
-   - **Option 2**: Session Service as first-class citizen, decoupled from the request lifecycle.. User session will be abstracted properly and be part of buisness logic. Session may be big so UserSession service can aggregate it by request and also save it to storage partialy in diffrent stages in buisness logic.
+   - **Option 2**: Session Service as a first-class citizen, decoupled from the request lifecycle. User session will be abstracted properly and be part of business logic. Session may be big so UserSession service can aggregate it by request and also save it to storage partially in different stages in business logic.
 
 A separate user session manager abstraction as an actor/service is more scalable, but it requires additional logic to fetch the session and ensure correct state propagation. This approach would be overly complex in the initial stages.
 Keeping the user session as part of the request has its own limitations: it can lead to stale state issues if multiple requests for the same user are processed in parallel.
@@ -133,7 +133,7 @@ Diagram:
  |  Bot logic:                     |
  |  Identify session transaction   |
  |  Change user state and/or  sync |
- |  changes in buisness service    |
+|  changes in business service    |
  +---------------------------------+
                |
                v
@@ -142,7 +142,7 @@ Diagram:
   |                                 |
   |  Business logic:                |
   |  Process user request           |
-  |  Make backand magic             |
+|  Make backend magic             |
   +---------------------------------+
                |
                v
@@ -167,11 +167,11 @@ Diagram:
     +---------------------------+
 ```
 
-Those decisions are anchors in terms of agile architecture. It means those decision will be hard to change in future.
+Those decisions are anchors in terms of agile architecture. It means those decisions will be hard to change in the future.
 Other architecture decisions will be based on this one with an agile approach.
 
 So the most promising "next step" options are:
-- A clear method to  create multi-step Wizard-like user interactions. With session-based transactions we can traet multi-step interaction as single transaction.
+ - A clear method to create multi-step Wizard-like user interactions. With session-based transactions we can treat multi-step interaction as a single transaction.
 
 
 ## Pros and Cons of the Options

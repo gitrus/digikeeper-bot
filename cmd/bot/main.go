@@ -7,9 +7,10 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	cmdh "github.com/gitrus/digikeeper-bot/internal/cmd_handler"
+	note "github.com/gitrus/digikeeper-bot/internal/note"
+	session "github.com/gitrus/digikeeper-bot/pkg/sessionmanager"
 	cmdrouter "github.com/gitrus/digikeeper-bot/pkg/telego_commandrouter"
 	tm "github.com/gitrus/digikeeper-bot/pkg/telego_middleware"
-	session "github.com/gitrus/digikeeper-bot/pkg/sessionmanager"
 )
 
 func main() {
@@ -41,10 +42,16 @@ func main() {
 	useStateMiddleware := tm.NewUserSessionMiddleware[*session.SimpleUserSession](usm)
 	bh.Use(useStateMiddleware.Middleware())
 
+	noteSvc := note.NewInMemoryService()
+
 	cmdHandlerGroup := cmdrouter.NewCommandHandlerGroup()
 	cmdHandlerGroup.RegisterCommand("start", cmdh.HandleStart, "Show start-bot message")
 	cmdHandlerGroup.RegisterCommand("cancel", cmdh.HandleCancel(usm), "Interrupt any current operation/s")
 	cmdHandlerGroup.RegisterCommand("add", cmdh.HandleAdd(usm), "Add new note to the list")
+	cmdHandlerGroup.RegisterCommand("addnote", cmdh.HandleAddNote(noteSvc), "Add note with tags and date")
+
+	callbacks := bh.Group(th.AnyCallbackQuery())
+	callbacks.Handle(cmdh.HandleAddNoteCallback(noteSvc), th.CallbackDataPrefix("addtag:"), th.CallbackDataEqual("save"))
 
 	cmdHandlerGroup.BindCommandsToHandler(bh)
 
